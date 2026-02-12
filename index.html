@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amplifex - Advanced Genomic Annotation & Primer Design</title>
+    <style>
+        /* =========================================
+           PROFESSIONAL SYSTEM STYLES (Original Preserved)
+           ========================================= */
+        :root {
+            --c-homopolymer: rgb(255,230,120);
+            --c-dinuc: rgb(102,204,102);
+            --c-trinuc: rgb(102,153,255);
+            --c-tetranuc: rgb(255,153,102);
+            --c-palindrome: rgb(180,102,255);
+            --c-lcr: rgb(220,220,220);
+            --c-gc: rgb(255,255,200);
+            --c-primer-f: rgb(34,139,34);
+            --c-primer-r: rgb(204,0,0);
+            --c-offtarget: rgba(255, 0, 0, 0.15);
+            
+            --primary: #104e8b;
+            --primary-dark: #0a2d52;
+            --primary-light: #e6f0ff;
+            --text-dark: #2c3e50;
+            --border: #d1d5db;
+            --bg-light: #f4f6f8;
+            --bg-white: #ffffff;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-light); color: var(--text-dark); line-height: 1.6; }
+
+        /* Header */
+        header {
+            background: white; border-bottom: 1px solid var(--border); padding: 1rem 0; margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; }
+        
+        h1 { margin: 0; color: var(--primary); font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; }
+        .sub { color: #6c757d; font-size: 0.9rem; font-weight: 400; margin-top: 4px; }
+        .credits { font-size: 0.8rem; color: #adb5bd; margin-top: 5px; font-family: monospace; }
+        
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 10px 20px; cursor: pointer;
+            font-weight: 600; border-radius: 6px; transition: all 0.2s; font-size: 0.9rem;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-outline { background: white; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary-light); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-success { background-color: var(--success); }
+        .btn-success:hover { background-color: #218838; }
+
+        /* Panels & Layout */
+        .panel { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 25px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .panel-header { border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Inputs */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--primary-dark); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Courier New', monospace; height: 120px; font-size: 0.95rem; transition: border 0.2s; }
+        textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 78, 139, 0.1); }
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+
+        /* Advanced Settings Toggle */
+        .settings-toggle { cursor: pointer; color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 10px; display: inline-block; user-select: none;}
+        .advanced-settings { display: none; background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e9ecef; margin-bottom: 20px; }
+        .advanced-settings.open { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 0; overflow-x: auto; background: white; border-radius: 8px 8px 0 0; }
+        .tab { padding: 15px 25px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; color: #6c757d; white-space: nowrap; transition: all 0.2s; }
+        .tab:hover { background: #f8f9fa; color: var(--primary); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: white; }
+
+        /* Stats Grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        
+        .stat-card { background: var(--primary-light); padding: 20px; text-align: center; border-radius: 8px; border: 1px solid #b8daff; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-val { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .stat-lbl { font-size: 0.85rem; text-transform: uppercase; color: #495057; font-weight: 600; margin-top: 5px; }
+
+        /* Sequence Map */
+        .seq-wrapper { 
+            overflow: hidden; 
+            border: 1px solid var(--border); 
+            padding: 0; 
+            background: white; 
+            min-height: 220px; 
+            border-radius: 6px; 
+            position: relative;
+        }
+        canvas { display: block; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+        
+        .map-controls {
+            position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9);
+            padding: 5px; border-radius: 4px; border: 1px solid #ccc; display: flex; gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .map-controls button { padding: 4px 8px; font-size: 0.8rem; cursor: pointer; }
+
+        .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.8rem; background: #f8f9fa; padding: 10px; border-radius: 6px; margin-top: 15px; border: 1px solid #eee; }
+        .legend-item { display: flex; align-items: center; }
+        .l-box { width: 14px; height: 14px; margin-right: 6px; border: 1px solid #999; border-radius: 3px; }
+
+        /* Primers Card Style (Original) */
+        .primer-card { border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 25px; background: #fff; border-left: 5px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        .p-seq-display { font-family: 'Courier New', monospace; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 10px; word-break: break-all; overflow-wrap: break-word; }
+        .p-fwd { color: var(--c-primer-f); }
+        .p-rev { color: var(--c-primer-r); }
+        
+        .primer-details-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 15px; 
+            font-size: 0.9rem;
+            table-layout: auto; 
+        }
+        .primer-details-table td { 
+            padding: 8px 10px; 
+            border-bottom: 1px solid #f1f3f5; 
+            color: #555; 
+            vertical-align: top;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .primer-details-table td:first-child { 
+            font-weight: 600; color: #333; 
+            width: 30%; 
+            min-width: 140px;
+        }
+        .primer-details-table td:nth-child(2) { 
+            width: auto; 
+            font-family: 'Courier New', monospace; 
+            font-size: 0.95rem; 
+        }
+        .status-badge { padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+        .status-pass { background: #d4edda; color: #155724; }
+        .status-warn { background: #fff3cd; color: #856404; }
+        .status-fail { background: #f8d7da; color: #721c24; }
+
+        .amplicon-box {
+            border: 1px solid #dee2e6; background: #fafafa; padding: 12px; margin-top: 15px; border-radius: 6px;
+            font-family: 'Courier New', monospace; font-size: 0.85rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all;
+            position: relative; line-height: 1.4;
+        }
+        .highlight-fwd { background-color: rgba(34,139,34,0.2); color: #005f00; font-weight: bold; border-bottom: 2px solid var(--c-primer-f); }
+        .highlight-rev { background-color: rgba(204,0,0,0.2); color: #990000; font-weight: bold; border-bottom: 2px solid var(--c-primer-r); }
+        .amp-header { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+
+        /* Oligo Physics Dashboard */
+        .physics-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+        .physics-card { background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .physics-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #f1f3f5; }
+        .physics-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px dashed #f0f0f0; padding-bottom: 4px; }
+        .physics-row:last-child { border: none; }
+        .p-label { color: #6c757d; font-weight: 500; }
+        .p-val { font-weight: 600; color: #333; font-family: 'Courier New', monospace; word-break: break-all; }
+        
+        .global-settings-box { 
+            background: #e9ecef; 
+            padding: 15px; 
+            border-radius: 8px; 
+            font-size: 0.85rem; 
+            color: #495057; 
+            margin-bottom: 25px; 
+            border-left: 4px solid var(--primary);
+        }
+
+        /* Charts */
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .chart-box { border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; text-align: center; background: white; }
+        .gauge-track { height: 24px; background: #e9ecef; border-radius: 12px; margin: 25px 0; position: relative; overflow: hidden; border: 1px solid #dee2e6; }
+        .gauge-optimal { position: absolute; left: 40%; width: 20%; height: 100%; background: rgba(40, 167, 69, 0.3); z-index: 1; }
+        .gauge-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--primary); z-index: 2; transition: width 1s; }
+        .gauge-label { position: absolute; width: 100%; text-align: center; top: 2px; font-weight: 700; z-index: 3; color: #fff; font-size: 0.8rem; text-shadow: 0 0 2px rgba(0,0,0,0.3); }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .modal { background: white; width: 90%; max-width: 600px; padding: 30px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); position: relative; overflow-y: auto; max-height: 90vh; }
+        .close-modal { position: absolute; top: 20px; right: 25px; font-size: 1.5rem; cursor: pointer; color: #aaa; transition: color 0.2s; }
+        .close-modal:hover { color: #333; }
+
+        /* Print Rules */
+        @media print {
+            body { background: white; -webkit-print-color-adjust: exact; }
+            header, .no-print, .tabs, .seq-wrapper, .map-controls { display: none !important; }
+            .container { max-width: 100%; padding: 0; margin: 0; }
+            .panel { box-shadow: none; border: none; padding: 0; margin: 0; page-break-inside: avoid; }
+            .page-break { break-after: page; }
+            h1, h2, h3 { color: black !important; border-color: black !important; }
+            .tab-content { display: block !important; margin-bottom: 2rem; }
+            #tab-0, #tab-1, #tab-2, #tab-3, #tab-4 { display: block !important; }
+            .amplicon-box { border: 1px solid #000; }
+            .physics-card { border: 1px solid #000; box-shadow: none; break-inside: avoid; }
+            .global-settings-box { border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container header-flex">
+        <div>
+            <h1>Amplifex</h1>
+            <div class="sub">Advanced Genomic Annotation & Automated Primer Design (Primer3/BLAST Standard)</div>
+            <div class="credits">Designed by Muhammad Sohaib Hassan</div>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="openContact()">Contact Us</button>
+            <button type="button" class="btn btn-sm" onclick="printReport()" id="dlBtn" style="display:none;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Print Report
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+
+    <!-- INPUT SECTION -->
+    <section class="panel no-print">
+        <div class="form-group">
+            <label>Job Name</label>
+            <input type="text" id="jobName" value="Amplifex_Analysis">
+        </div>
+        <div class="form-group">
+            <label>DNA Sequence (FASTA or Raw A/T/C/G)</label>
+            <textarea id="seqInput" placeholder=">SequenceName&#10;ATCGATCG..."></textarea>
+            <div style="font-size:0.8rem; color:#666; margin-top:5px;">Supported formats: Raw sequence, FASTA. Maximum recommended length: 10,000 bp.</div>
+        </div>
+
+        <!-- Advanced Settings Toggle -->
+        <div class="settings-toggle" id="settingsToggleBtn" onclick="toggleSettings()">[+] Show Advanced Design Parameters</div>
+        <div class="advanced-settings" id="advSettings">
+            <div class="form-group">
+                <label>Primer Size (bp)</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="pMin" value="18" min="15" max="30" style="width:80px">
+                    <span>-</span>
+                    <input type="number" id="pMax" value="25" min="15" max="30" style="width:80px">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Primer Tm (°C)</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="tmMin" value="55" min="40" max="80" style="width:80px">
+                    <span>-</span>
+                    <input type="number" id="tmMax" value="65" min="40" max="80" style="width:80px">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Product Size (bp)</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="prodMin" value="100" min="50" style="width:80px">
+                    <span>-</span>
+                    <input type="number" id="prodMax" value="1000" max="5000" style="width:80px">
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 25px;">
+            <button type="button" class="btn" style="padding: 12px 40px; font-size: 1.1rem;" onclick="App.run()">
+                Run Analysis
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </button>
+        </div>
+        
+        <div id="loader" style="display:none; text-align:center; color:var(--primary); font-weight:bold; margin-top:20px;">
+            Analyzing Sequence...<br><small>(Running Thermodynamic Calculations)</small>
+        </div>
+    </section>
+
+    <!-- REPORT CONTENT -->
+    <div id="resultsArea" style="display:none;">
+        
+        <div class="tabs no-print">
+            <div class="tab active" onclick="App.switchTab(0)">Summary</div>
+            <div class="tab" onclick="App.switchTab(1)">Sequence Map</div>
+            <div class="tab" onclick="App.switchTab(2)">Charts & Stats</div>
+            <div class="tab" onclick="App.switchTab(3)">Primer Pairs</div>
+            <div class="tab" onclick="App.switchTab(4)">Oligo Physics</div>
+        </div>
+
+        <!-- PAGE 1: SUMMARY -->
+        <div id="tab-0" class="tab-content page-break">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 style="margin:0;">Job Summary</h2>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="App.exportData('summary')">Download CSV</button>
+                </div>
+                <div class="grid-4">
+                    <div class="stat-card"><div class="stat-val" id="s-len">0</div><div class="stat-lbl">Length (bp)</div></div>
+                    <div class="stat-card"><div class="stat-val" id="s-gc">0%</div><div class="stat-lbl">GC Content</div></div>
+                    <div class="stat-card"><div class="stat-val" id="s-at">0</div><div class="stat-lbl">A + T</div></div>
+                    <div class="stat-card"><div class="stat-val" id="s-g">0</div><div class="stat-lbl">G + C</div></div>
+                </div>
+                
+                <div class="global-settings-box">
+                    <strong>Analysis Parameters:</strong><br>
+                    • Search Depth: Full Sequence<br>
+                    • Thermodynamics: SantaLucia (1998) NN Model<br>
+                    • Salt Correction: 50mM K+/Na+<br>
+                    • Specificity Check: In-Silico Genome Scan
+                </div>
+
+                <h3 style="margin-top:30px;">Sequence Features</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:0.9rem;">
+                    <tr style="background:#f8f9fa; text-align:left;"><th style="padding:10px;">Feature</th><th style="padding:10px;">Count</th><th style="padding:10px;">Description</th></tr>
+                    <tbody id="featTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAGE 1b: MAP -->
+        <div id="tab-1" class="tab-content page-break">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 style="margin:0;">Complete DNA Description</h2>
+                    <button type="button" class="btn btn-sm btn-outline" onclick="App.exportData('map')">Export Map Data</button>
+                </div>
+                <div class="seq-wrapper" id="seqContainer">
+                    <canvas id="seqCanvas"></canvas>
+                    <div class="map-controls">
+                        <button type="button" onclick="App.mapZoom(1.2)">+</button>
+                        <button type="button" onclick="App.mapZoom(0.8)">-</button>
+                        <button type="button" onclick="App.mapReset()">Reset</button>
+                    </div>
+                </div>
+                <div class="legend" id="mapLegend"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: CHARTS -->
+        <div id="tab-2" class="tab-content page-break">
+            <div class="panel">
+                <div class="panel-header"><h2 style="margin:0;">Charts & Feature Breakdown</h2></div>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:#444;">Base Composition</h3>
+                        <canvas id="pieBase" width="200" height="200"></canvas>
+                        <div id="pieBaseLegend" style="display:flex; justify-content:center; gap:10px; font-size:0.8rem; margin-top:10px;"></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:#444;">Feature Distribution</h3>
+                        <canvas id="pieFeat" width="200" height="200"></canvas>
+                        <div id="pieFeatLegend" style="display:flex; justify-content:center; gap:5px; flex-wrap:wrap; font-size:0.8rem; margin-top:10px;"></div>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:#444;">GC Content Analysis</h3>
+                        <div class="gauge-track">
+                            <div class="gauge-optimal"></div>
+                            <div class="gauge-fill" id="gcBar" style="width:0%"></div>
+                            <div class="gauge-label" id="gcLabel">0%</div>
+                        </div>
+                        <small>Optimal Range Highlighted (40-60%)</small>
+                    </div>
+                    <div class="chart-box">
+                        <h3 style="margin-top:0; color:#444;">Base Counts</h3>
+                        <canvas id="barCounts" width="200" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: PRIMERS (DETAILED) -->
+        <div id="tab-3" class="tab-content page-break">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 style="margin:0;">Best Primer Pairs</h2>
+                    <button type="button" class="btn btn-sm btn-success" onclick="App.exportData('primers')">Export Primer CSV</button>
+                </div>
+                <div id="primerOutput"></div>
+            </div>
+        </div>
+
+        <!-- PAGE 4: OLIGO PHYSICS (DASHBOARD) -->
+        <div id="tab-4" class="tab-content page-break">
+            <div class="panel">
+                <div class="panel-header"><h2 style="margin:0;">Oligo Physics & Analysis</h2></div>
+                <div class="form-group">
+                    <label>Enter Primer Sequence (5' -> 3')</label>
+                    <input type="text" id="singlePrimerInput" placeholder="ATCG..." oninput="App.calcSinglePrimer()">
+                </div>
+                
+                <div id="singlePrimerResult" style="display:none;">
+                    <div class="global-settings-box">
+                        <strong>Global Settings:</strong><br>
+                        • Primer concentration: 200 nM<br>
+                        • Combined [K+]/[Na+]: 50 mM<br>
+                        • [Mg2+]: 1.5 mM
+                    </div>
+                    
+                    <div class="physics-dashboard" id="physicsGrid">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+    <div class="modal">
+        <span class="close-modal" onclick="closeContact()">&times;</span>
+        <h2 style="color:var(--primary); margin-top:0;">Contact Support</h2>
+        <p style="font-size:0.9rem; color:#666;">Fill out the details below to send a message to Muhammad Sohaib Hassan.</p>
+        
+        <label>Name</label>
+        <input type="text" id="cName" placeholder="Your Name">
+        <label>Reason</label>
+        <select id="cReason">
+            <option value="General Inquiry">General Inquiry</option>
+            <option value="Bug Report">Bug Report</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="Collaboration">Collaboration</option>
+        </select>
+        <label>Message</label>
+        <textarea id="cMsg" rows="5" placeholder="Describe your issue or request..."></textarea>
+        <button type="button" class="btn" style="width:100%;" onclick="sendContact()">Send Message</button>
+    </div>
+</div>
+
+<script>
+/* =========================================
+   THERMODYNAMIC ENGINE (SANTALUCIA 1998)
+   ========================================= */
+const Thermo = {
+    MW: { 'A': 313.21, 'T': 304.20, 'G': 329.21, 'C': 289.18 },
+    Epsilon: { 'A': 15400, 'T': 8800, 'G': 11500, 'C': 7400 },
+    NN: {
+        'AA': [-7.9, -22.2], 'TT': [-7.9, -22.2], 'AT': [-7.2, -20.4], 'TA': [-7.2, -21.3],
+        'CA': [-8.5, -22.7], 'TG': [-8.5, -22.7], 'GT': [-8.4, -22.4], 'AC': [-8.4, -22.4],
+        'CT': [-7.8, -21.0], 'AG': [-7.8, -21.0], 'GA': [-8.2, -22.2], 'TC': [-8.2, -22.2],
+        'CG': [-10.6, -27.2], 'GC': [-9.8, -24.4], 'GG': [-8.0, -19.9], 'CC': [-8.0, -19.9]
+    },
+    INIT: { 'A': [2.3, 4.1], 'C': [2.3, 4.1], 'G': [2.3, 4.1], 'T': [2.3, 4.1] },
+    SYM: [0.0, -1.4],
+
+    calcMW: (seq) => {
+        let mw = 0;
+        for(let c of seq) mw += (Thermo.MW[c] || 0);
+        return mw;
+    },
+    calcExtinction: (seq) => {
+        let e = 0;
+        for(let c of seq) e += (Thermo.Epsilon[c] || 0);
+        return e;
+    },
+    calcBasicTm: (seq) => {
+        const s = seq.toUpperCase();
+        const a = (s.match(/A/g)||[]).length + (s.match(/T/g)||[]).length;
+        const g = (s.match(/G/g)||[]).length + (s.match(/C/g)||[]).length;
+        return 2*a + 4*g;
+    },
+    calcSaltAdjustedTm: (seq) => {
+        const gc = ((seq.match(/[GC]/g)||[]).length / seq.length) * 100;
+        const na = 0.05;
+        return 81.5 + 16.6 * Math.log10(na) + 0.41 * gc - (600 / seq.length);
+    },
+    calcTm: (seq) => {
+        seq = seq.toUpperCase();
+        if(seq.length < 4) return 0; 
+        let dH = 0; let dS = 0;
+        const first = seq[0]; const last = seq[seq.length - 1];
+        if(Thermo.INIT[first]) { dH += Thermo.INIT[first][0]; dS += Thermo.INIT[first][1]; }
+        if(Thermo.INIT[last]) { dH += Thermo.INIT[last][0]; dS += Thermo.INIT[last][1]; }
+        for(let i=0; i<seq.length-1; i++) {
+            const pair = seq.substring(i, i+2);
+            if(Thermo.NN[pair]) { dH += Thermo.NN[pair][0]; dS += Thermo.NN[pair][1]; }
+        }
+        if(seq === Thermo.revcomp(seq)) { dH += Thermo.SYM[0]; dS += Thermo.SYM[1]; }
+        const R = 1.987;
+        const C = 0.0000002;
+        const K = 0.05;
+        const tm = (dH * 1000) / (dS + R * Math.log(C/4)) - 273.15 + 16.6 * Math.log10(K);
+        return tm;
+    },
+    calcDG: (seq1, seq2) => {
+        let dH = 0; let dS = 0;
+        if(seq1.length > 0 && seq2.length > 0) {
+            if(Thermo.INIT[seq1[0]]) { dH += Thermo.INIT[seq1[0]][0]; dS += Thermo.INIT[seq1[0]][1]; }
+            if(Thermo.INIT[seq1[seq1.length-1]]) { dH += Thermo.INIT[seq1[seq1.length-1]][0]; dS += Thermo.INIT[seq1[seq1.length-1]][1]; }
+        }
+        for(let i=0; i<seq1.length-1; i++) {
+            const pair = seq1.substring(i, i+2);
+            if(Thermo.NN[pair]) { dH += Thermo.NN[pair][0]; dS += Thermo.NN[pair][1]; }
+        }
+        const R = 1.987;
+        const T = 298.15;
+        const dG = (dH * 1000) - (T * (dS + R * Math.log(1)));
+        return dG;
+    },
+    findStructure: (seq, type='self') => {
+        let minDG = 0;
+        let bestAlignTop = ""; 
+        let bestAlignBot = ""; 
+        const target = (type === 'self') ? Thermo.revcomp(seq) : seq;
+        for(let offset = -seq.length + 1; offset < seq.length; offset++) {
+            let seg1 = ""; let seg2 = "";
+            for(let i = 0; i < seq.length; i++) {
+                const rPos = i - offset;
+                if (rPos >= 0 && rPos < seq.length) {
+                    seg1 += seq[i];
+                    seg2 += target[rPos];
+                }
+            }
+            if(seg1.length > 3) {
+                let matchStr = "";
+                for(let k=0; k<seg1.length; k++) {
+                    if(seg1[k] === Thermo.comp(seg2[k])) matchStr += seg1[k];
+                    else matchStr += " ";
+                }
+                let blocks = matchStr.split(/\s+/).filter(b => b.length >= 3);
+                blocks.forEach(block => {
+                    const dG = Thermo.calcDG(block, Thermo.revcomp(block));
+                    if(dG < minDG) {
+                        minDG = dG;
+                        bestAlignTop = block; 
+                        bestAlignBot = Thermo.revcomp(block);
+                    }
+                });
+            }
+        }
+        return { dg: minDG, top: bestAlignTop, bot: bestAlignBot };
+    },
+    findCrossDimer: (seq1, seq2) => {
+        let minDG = 0;
+        let bestAlign = {top:"", bot:""};
+        const rc2 = Thermo.revcomp(seq2);
+        const len1 = seq1.length;
+        const len2 = rc2.length;
+        for(let offset = -len1; offset < len2; offset++) {
+             let seg1 = ""; let seg2 = "";
+             for(let i=0; i<len1; i++) {
+                 const j = i - offset;
+                 if(j>=0 && j<len2) {
+                     seg1 += seq1[i];
+                     seg2 += rc2[j];
+                 }
+             }
+             let matchStr = "";
+             for(let k=0; k<seg1.length; k++) {
+                 if(seg1[k] === Thermo.comp(seg2[k])) matchStr += seg1[k];
+                 else matchStr += " ";
+             }
+             let blocks = matchStr.split(/\s+/).filter(b => b.length >= 3);
+             blocks.forEach(block => {
+                 const dG = Thermo.calcDG(block, Thermo.revcomp(block));
+                 if(dG < minDG) {
+                     minDG = dG;
+                     bestAlign = {top: block, bot: Thermo.revcomp(block)};
+                 }
+             });
+        }
+        return { dg: minDG, ...bestAlign };
+    },
+    revcomp: (s) => {
+        const m = {'A':'T','T':'A','G':'C','C':'G','a':'t','t':'a','g':'c','c':'g','N':'N'};
+        return s.split('').reverse().map(c => m[c] || 'N').join('');
+    },
+    comp: (c) => {
+        const m = {'A':'T','T':'A','G':'C','C':'G','a':'t','t':'a','g':'c','c':'g'};
+        return m[c] || 'N';
+    }
+};
+
+const Utils = {
+    gc_percent: (s) => { if(!s.length) return 0; return ((s.match(/[GC]/gi)||[]).length / s.length) * 100; },
+    shannon_entropy: (s) => {
+        const counts = {}; s.split('').forEach(c => counts[c] = (counts[c]||0)+1);
+        let e = 0; Object.values(counts).forEach(v => { const p = v/s.length; e -= p * Math.log2(p); });
+        return e;
+    }
+};
+
+function find_ssr_regex(seq) {
+    seq = seq.toUpperCase(); const hits = []; const thresholds = {1:5,2:4,3:3,4:3,5:3};
+    for(let unit=1; unit<=5; unit++) {
+        const min = thresholds[unit] || 3;
+        const regex = new RegExp(`((?:[ACGT]{${unit}}))(?:\\1){${min-1},}`, 'g');
+        let m;
+        while((m = regex.exec(seq)) !== null) {
+            hits.push({unit, unitseq: m[1], start: m.index, end: m.index + m[0].length - 1, repeats: Math.floor(m[0].length / unit)});
+        }
+    }
+    hits.sort((a,b)=>a.start-b.start); const merged = [];
+    for(let h of hits) { if(!merged.length || h.start > merged[merged.length-1].end) merged.push(h); else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, h.end); }
+    return hits;
+}
+function find_palindromes(seq) {
+    seq = seq.toUpperCase(); let pals = []; const L = seq.length;
+    for(let i=0; i<L; i++) {
+        for(let stem=4; stem<=Math.min(12, Math.floor((L-i)/2)); stem++) {
+            for(let loop=0; loop<=20; loop++) {
+                const j = i+stem+loop; if(j+stem > L) break;
+                const left = seq.substring(i,i+stem); const right = seq.substring(j,j+stem);
+                if(left === Thermo.revcomp(right)) pals.push({start:i, end:j+stem-1});
+            }
+        }
+    }
+    pals.sort((a,b)=>a.start-b.start); const merged = [];
+    for(let p of pals) { if(!merged.length || p.start > merged[merged.length-1].end) merged.push(p); else merged[merged.length-1].end = Math.max(merged[merged.length-1].end, p.end); }
+    return pals;
+}
+function find_lcr(seq) {
+    seq = seq.toUpperCase(); const hits = []; const window = 20;
+    for(let i=0; i<=seq.length-window; i++) { if(Utils.shannon_entropy(seq.substring(i,i+window)) < 1.2) hits.push([i, i+window-1]); }
+    hits.sort((a,b)=>a[0]-b[0]); const merged = [];
+    for(let h of hits) { if(!merged.length || h[0] > merged[merged.length-1][1]+1) merged.push(h); else merged[merged.length-1][1] = Math.max(merged[merged.length-1][1], h[1]); }
+    return merged.map(x => ({start:x[0], end:x[1]}));
+}
+
+function score_primer_nn(p) {
+    const tm = Thermo.calcTm(p); 
+    const gc = Utils.gc_percent(p); 
+    const L = p.length;
+    const minTm = parseFloat(document.getElementById('tmMin').value);
+    const maxTm = parseFloat(document.getElementById('tmMax').value);
+    let score = 100; 
+    let penalty = 0;
+    const targetTm = (minTm + maxTm) / 2;
+    if(tm < minTm) penalty += (minTm - tm) * 2;
+    if(tm > maxTm) penalty += (tm - maxTm) * 2;
+    if(gc < 40) penalty += (40 - gc); 
+    if(gc > 60) penalty += (gc - 60);
+    const last5 = p.slice(-5);
+    const gcLast5 = (last5.match(/[GC]/g) || []).length;
+    if(gcLast5 >= 3) { score += 5; } 
+    else { penalty += 5; }
+    if(/(A{5,}|T{5,}|G{5,}|C{5,})/.test(p)) penalty += 10;
+    const selfStruct = Thermo.findStructure(p, 'self');
+    if(selfStruct.dg < -9) penalty += 15;
+    return {score: Math.max(0, 100 - penalty), tm, gc, len:L, selfDG: selfStruct.dg};
+}
+
+// ========================================
+// FIXED PRIMER GENERATION LOGIC
+// ========================================
+function pick_primers_robust(seq) {
+    const prodMin = parseInt(document.getElementById('prodMin').value);
+    const prodMax = parseInt(document.getElementById('prodMax').value);
+    const minL = parseInt(document.getElementById('pMin').value);
+    const maxL = parseInt(document.getElementById('pMax').value);
+    const minTm = parseFloat(document.getElementById('tmMin').value);
+    const maxTm = parseFloat(document.getElementById('tmMax').value);
+
+    // 1. Scan entire sequence for all valid candidates (Forward and Reverse)
+    // This fixes the issue where large product sizes limited the search window.
+    let allFwd = [];
+    let allRev = [];
+    
+    // Scan for Forward primers (Start anywhere, read 5'->3')
+    for(let i=0; i < seq.length; i+=2) { // Step 2 for speed
+        for(let L = minL; L <= maxL; L++) {
+            if(i+L > seq.length) break;
+            const pRaw = seq.substring(i, i+L);
+            const tm = Thermo.calcTm(pRaw);
+            if(tm >= minTm && tm <= maxTm) {
+                const score = score_primer_nn(pRaw);
+                if(score.score > 50) { // Only keep decent primers
+                    allFwd.push({seq: pRaw, start: i, end: i+L-1, ...score});
+                }
+            }
+        }
+    }
+
+    // Scan for Reverse primers (These are RevComps of segments on the Top Strand)
+    for(let i=0; i < seq.length; i+=2) {
+        for(let L = minL; L <= maxL; L++) {
+            if(i+L > seq.length) break;
+            const pRaw = seq.substring(i, i+L);
+            const pRev = Thermo.revcomp(pRaw);
+            const tm = Thermo.calcTm(pRev);
+            if(tm >= minTm && tm <= maxTm) {
+                const score = score_primer_nn(pRev);
+                if(score.score > 50) {
+                    // The start/end stored are positions on the Top Strand (5' end of binding site)
+                    allRev.push({seq: pRev, start: i, end: i+L-1, ...score});
+                }
+            }
+        }
+    }
+
+    // Sort by score (best first)
+    allFwd.sort((a,b) => b.score - a.score);
+    allRev.sort((a,b) => b.score - a.score);
+
+    // Limit to top candidates to ensure performance
+    const topFwd = allFwd.slice(0, 300);
+    const topRev = allRev.slice(0, 300);
+
+    const validPairs = [];
+
+    // 2. Pairing Logic
+    for(let f of topFwd) {
+        // Optimization: Calculate the valid range for Reverse Primer Start Positions
+        // Amplicon Length = (Rev_Start + Rev_Len) - Fwd_Start
+        // So, Rev_Start must be between (Fwd_Start + prodMin - Rev_Len) and (Fwd_Start + prodMax - Rev_Len)
+        
+        // To keep it simple and robust without complex pre-filtering arrays:
+        for(let r of topRev) {
+            const ampLen = (r.start + r.len) - f.start;
+
+            if(ampLen < prodMin || ampLen > prodMax) continue;
+
+            // Check Tm Diff
+            if(Math.abs(f.tm - r.tm) > 5) continue;
+
+            // Check Cross Dimer
+            const cross = Thermo.findCrossDimer(f.seq, r.seq);
+            if(cross.dg < -9) continue; // Filter out dangerous dimers
+
+            validPairs.push({ 
+                f: f, 
+                r: r, 
+                amplicon: ampLen, 
+                pairScore: f.score + r.score, 
+                crossDG: cross.dg 
+            });
+        }
+    }
+
+    validPairs.sort((a,b) => b.pairScore - a.pairScore);
+    return validPairs;
+}
+
+const App = {
+    data: null,
+    mapState: { scale: 1, offsetX: 0, isDragging: false, lastX: 0 },
+    
+    init: () => { 
+        document.getElementById('jobName').value = "Amplifex_" + new Date().toISOString().slice(0,10); 
+        const cvs = document.getElementById('seqCanvas');
+        cvs.addEventListener('mousedown', e => {
+            App.mapState.isDragging = true;
+            App.mapState.lastX = e.clientX;
+        });
+        window.addEventListener('mouseup', () => App.mapState.isDragging = false);
+        cvs.addEventListener('mousemove', e => {
+            if(App.mapState.isDragging) {
+                const delta = e.clientX - App.mapState.lastX;
+                App.mapState.offsetX += delta;
+                App.mapState.lastX = e.clientX;
+                App.drawCanvas();
+            }
+        });
+        cvs.addEventListener('wheel', e => {
+            e.preventDefault();
+            const zoomSensitivity = 0.001;
+            const delta = -e.deltaY * zoomSensitivity;
+            const newScale = Math.max(0.5, Math.min(5, App.mapState.scale + delta));
+            App.mapState.scale = newScale;
+            App.drawCanvas();
+        });
+    },
+
+    switchTab: (idx) => {
+        document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+        document.querySelectorAll('.tab-content').forEach((c,i) => c.style.display = (i===idx) ? 'block' : 'none');
+        if(idx===1 && App.data) App.drawCanvas();
+        if(idx===2 && App.data) App.drawCharts();
+    },
+    
+    getPrimerStatsHTML: (primer, type) => {
+        const seq = primer.seq;
+        const len = seq.length;
+        const gc = Utils.gc_percent(seq);
+        const mw = Thermo.calcMW(seq);
+        const ext = Thermo.calcExtinction(seq);
+        const basicTm = Thermo.calcBasicTm(seq);
+        const saltTm = Thermo.calcSaltAdjustedTm(seq);
+        const nnTm = Thermo.calcTm(seq);
+        const selfStruct = Thermo.findStructure(seq, 'self');
+        const selfDG = selfStruct.dg;
+        const end5 = seq.slice(-5);
+        const endDG = Thermo.calcDG(end5, Thermo.revcomp(end5));
+        const nmolVal = (1 / ext) * 1e9;
+        const ugVal = (mw / ext) * 1e6;
+        const getBadge = (condition, text, type='pass') => {
+            if(condition) return `<span class="status-badge status-${type}">${text}</span>`;
+            return `<span class="status-badge status-fail">Fail</span>`;
+        };
+        return `
+            <table class="primer-details-table">
+                <tr><td>Sequence (5'->3')</td><td class="p-seq-display ${type==='fwd'?'p-fwd':'p-rev'}">${seq}</td></tr>
+                <tr><td>Length</td><td>${len} bp</td></tr>
+                <tr><td>Genomic Coordinates</td><td>${primer.start + 1} - ${primer.end + 1}</td></tr>
+                <tr><td>Tm (Nearest Neighbor)</td><td>${nnTm.toFixed(2)} °C</td></tr>
+                <tr><td>GC Content</td><td>${gc.toFixed(1)} %</td></tr>
+                <tr><td>Molecular Weight</td><td>${mw.toFixed(2)} Da</td></tr>
+                <tr><td>Self-Dimer ΔG</td><td>${selfDG.toFixed(2)} kcal/mol</td></tr>
+                <tr><td>3' End Stability</td><td>${endDG.toFixed(2)} kcal/mol (5 bases)</td></tr>
+                <tr><td>Conc. (nmol/A260)</td><td>${nmolVal.toFixed(2)}</td></tr>
+                <tr><td>Conc. (ug/A260)</td><td>${ugVal.toFixed(2)}</td></tr>
+            </table>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                ${getBadge(gc >= 40 && gc <= 60, "GC Content", "pass")}
+                ${getBadge(selfDG > -6, "No Self-Dimer", "pass")}
+                ${getBadge(len >= 18 && len <= 25, "Length", "pass")}
+            </div>
+            ${selfDG < -6 ? `<div style="margin-top:5px; font-size:0.8rem; color:var(--danger); font-family:monospace;">Warning: Stable Self-Dimer detected.<br>${selfStruct.top}<br>${selfStruct.bot}</div>` : ''}
+        `;
+    },
+
+    calcSinglePrimer: () => {
+        const seq = document.getElementById('singlePrimerInput').value.replace(/[^ATGC]/gi, '').toUpperCase();
+        const resDiv = document.getElementById('singlePrimerResult');
+        const gridDiv = document.getElementById('physicsGrid');
+        if(seq.length < 2) { resDiv.style.display='none'; return; }
+        resDiv.style.display='block';
+        const len = seq.length;
+        const counts = { A: (seq.match(/A/g)||[]).length, T: (seq.match(/T/g)||[]).length, G: (seq.match(/G/g)||[]).length, C: (seq.match(/C/g)||[]).length };
+        const gc = Utils.gc_percent(seq);
+        const mw = Thermo.calcMW(seq);
+        const ext = Thermo.calcExtinction(seq);
+        const basicTm = Thermo.calcBasicTm(seq);
+        const saltTm = Thermo.calcSaltAdjustedTm(seq);
+        const nnTm = Thermo.calcTm(seq);
+        const nmolVal = (1 / ext) * 1e9;
+        const ugVal = (mw / ext) * 1e6;
+        const selfStruct = Thermo.findStructure(seq, 'self');
+        const maxRun = Math.max(counts.A, counts.T, counts.G, counts.C);
+        const row = (label, val) => `<div class="physics-row"><div class="p-label">${label}</div><div class="p-val">${val}</div></div>`;
+        gridDiv.innerHTML = `
+            <div class="physics-card">
+                <div class="physics-title">General Properties</div>
+                ${row("Sequence", seq)}
+                ${row("Length", len + " bp")}
+                ${row("Template", Thermo.revcomp(seq))}
+                ${row("Base Counts", `G:${counts.G} A:${counts.A} T:${counts.T} C:${counts.C}`)}
+                ${row("GC Content", gc.toFixed(2) + "%")}
+                ${row("Molecular Weight", mw.toFixed(2) + " Da")}
+            </div>
+            <div class="physics-card">
+                <div class="physics-title">Thermodynamics</div>
+                ${row("Basic Tm (Wallace)", basicTm + " °C")}
+                ${row("Salt Adj. Tm", saltTm.toFixed(2) + " °C")}
+                ${row("NN Tm (SantaLucia)", nnTm.toFixed(2) + " °C")}
+                ${row("Extinction (e260)", ext.toFixed(0) + " /M/cm")}
+                ${row("nmol/A260", nmolVal.toFixed(2))}
+                ${row("ug/A260", ugVal.toFixed(2))}
+            </div>
+            <div class="physics-card">
+                <div class="physics-title">Suitability Tests</div>
+                ${row("Homopolymer", maxRun <= 4 ? "<span class='status-badge status-pass'>Pass</span>" : "<span class='status-badge status-fail'>Fail (>4)</span>")}
+                ${row("Length", (len >= 18 && len <= 25) ? "<span class='status-badge status-pass'>Pass</span>" : "<span class='status-badge status-warn'>Warn</span>")}
+                ${row("GC Content", (gc >= 40 && gc <= 60) ? "<span class='status-badge status-pass'>Pass</span>" : "<span class='status-badge status-warn'>Warn</span>")}
+                ${row("Self-Dimer ΔG", selfStruct.dg.toFixed(2) + " kcal/mol")}
+                 ${row("Self-Dimer Status", selfStruct.dg > -6 ? "<span class='status-badge status-pass'>Stable</span>" : "<span class='status-badge status-fail'>Unstable</span>")}
+                ${selfStruct.dg < -6 ? `<div style="margin-top:5px; font-family:monospace; font-size:0.75rem; color:#666; word-break:break-all;">Struct: ${selfStruct.top}</div>` : ''}
+            </div>
+        `;
+    },
+
+    run: () => {
+        const raw = document.getElementById('seqInput').value;
+        const seq = raw.replace(/[^ATGC]/gi,'').toUpperCase();
+        if(seq.length < 10) return alert("Sequence too short or contains invalid characters.");
+        document.getElementById('loader').style.display = 'block';
+        setTimeout(() => {
+            App.process(seq);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('resultsArea').style.display = 'block';
+            document.getElementById('dlBtn').style.display = 'inline-flex';
+            App.switchTab(0);
+        }, 100);
+    },
+
+    process: (seq) => {
+        const len = seq.length;
+        const counts = {A:0, T:0, G:0, C:0};
+        for(let c of seq) counts[c]++;
+        const gcPct = Utils.gc_percent(seq);
+        const ssr = find_ssr_regex(seq);
+        const features = {
+            homopolymers: [], dinuc: ssr.filter(x=>x.unit===2), trinuc: ssr.filter(x=>x.unit===3), tetranuc: ssr.filter(x=>x.unit===4),
+            palindromes: find_palindromes(seq), lcr: find_lcr(seq)
+        };
+        const hMatch = seq.matchAll(/(A{5,}|T{5,}|G{5,}|C{5,})/g);
+        for(let m of hMatch) features.homopolymers.push({start:m.index, end:m.index+m[0].length-1});
+        const primers = pick_primers_robust(seq);
+        if(primers.length > 0) {
+            primers.forEach(p => {
+                p.f.offtargets = App.checkSpecificity(p.f.seq, seq);
+                p.r.offtargets = App.checkSpecificity(p.r.seq, seq);
+            });
+        }
+        App.data = { seq, len, counts, gcPct, features, primers };
+        App.render();
+    },
+
+    checkSpecificity: (primer, genome) => {
+        const targets = [];
+        const rcGenome = Thermo.revcomp(genome);
+        for(let i=0; i<genome.length - 14; i++) {
+            const seg = genome.substring(i, i+15);
+            if(primer.startsWith(seg)) {
+                targets.push({pos: i, strand: '+', match: seg});
+            }
+        }
+        for(let i=0; i<rcGenome.length - 14; i++) {
+            const seg = rcGenome.substring(i, i+15);
+            if(primer.startsWith(seg)) {
+                 targets.push({pos: i, strand: '-', match: seg});
+            }
+        }
+        return targets;
+    },
+
+    render: () => {
+        const d = App.data;
+        document.getElementById('s-len').innerText = d.len;
+        document.getElementById('s-gc').innerText = d.gcPct.toFixed(1)+"%";
+        document.getElementById('s-at').innerText = d.counts.A + d.counts.T;
+        document.getElementById('s-g').innerText = d.counts.G + d.counts.C;
+        const feats = [
+            ['Homopolymers (≥5)', d.features.homopolymers.length], 
+            ['Dinuc (≥4)', d.features.dinuc.length], 
+            ['Trinuc (≥3)', d.features.trinuc.length], 
+            ['Tetranuc (≥3)', d.features.tetranuc.length], 
+            ['Palindromes', d.features.palindromes.length], 
+            ['Low-complexity', d.features.lcr.length]
+        ];
+        document.getElementById('featTable').innerHTML = feats.map(f => `<tr><td>${f[0]}</td><td>${f[1]}</td><td>Repetitive regions</td></tr>`).join('');
+        document.getElementById('primerOutput').innerHTML = d.primers.map((p, i) => {
+            const viewStart = Math.max(0, p.f.start - 50);
+            const viewEnd = Math.min(d.seq.length, p.r.start + p.r.len + 50);
+            const viewSeq = d.seq.substring(viewStart, viewEnd);
+            let htmlSeq = "";
+            for(let k=0; k<viewSeq.length; k++) {
+                const globalPos = viewStart + k;
+                let cls = ""; let char = viewSeq[k];
+                if(globalPos >= p.f.start && globalPos <= p.f.end) cls = "highlight-fwd";
+                else if(globalPos >= p.r.start && globalPos < p.r.start + p.r.len) cls = "highlight-rev";
+                htmlSeq += `<span class="${cls}">${char}</span>`;
+            }
+            const fwdStats = App.getPrimerStatsHTML(p.f, 'fwd');
+            const revStats = App.getPrimerStatsHTML(p.r, 'rev');
+            const fWarn = p.f.offtargets.length > 1 ? `<div style="color:var(--warning); font-size:0.8rem; margin-top:5px;">⚠ ${p.f.offtargets.length-1} potential off-target sites (15bp+ match)</div>` : '';
+            const rWarn = p.r.offtargets.length > 1 ? `<div style="color:var(--warning); font-size:0.8rem; margin-top:5px;">⚠ ${p.r.offtargets.length-1} potential off-target sites (15bp+ match)</div>` : '';
+            return `
+            <div class="primer-card">
+                <div class="p-header">
+                    <h3 style="margin:0; color:var(--primary);">Pair ${i+1}</h3>
+                    <span style="font-weight:bold; color:#555;">Amplicon: ${p.amplicon} bp</span>
+                    <div style="font-size:0.8rem; color:#666;">Pair Score: ${p.pairScore.toFixed(0)} | Cross-Dimer ΔG: ${p.crossDG.toFixed(2)} kcal/mol</div>
+                </div>
+                <div class="grid-2">
+                    <div>
+                        <div class="p-header" style="border:none; padding-bottom:5px; margin-bottom:5px;">
+                            <span style="font-weight:700; color:var(--c-primer-f);">FORWARD PRIMER</span>
+                        </div>
+                        ${fwdStats}
+                        ${fWarn}
+                    </div>
+                    <div>
+                        <div class="p-header" style="border:none; padding-bottom:5px; margin-bottom:5px;">
+                            <span style="font-weight:700; color:var(--c-primer-r);">REVERSE PRIMER</span>
+                        </div>
+                        ${revStats}
+                        ${rWarn}
+                    </div>
+                </div>
+                <span class="amp-header">Amplicon Visualization (Context +/- 50bp):</span>
+                <div class="amplicon-box">${htmlSeq}</div>
+                <div style="text-align:center; font-size:0.75rem; color:#666; margin-top:-10px;">
+                    <span style="color:var(--c-primer-f)">■</span> Forward Primer
+                    <span style="color:var(--c-primer-r); margin-left:10px;">■</span> Reverse Primer (on Fwd Strand)
+                </div>
+            </div>`;
+        }).join('');
+        App.drawCanvas();
+        App.drawCharts();
+        App.drawLegend();
+    },
+    mapZoom: (factor) => {
+        App.mapState.scale *= factor;
+        App.drawCanvas();
+    },
+    mapReset: () => {
+        App.mapState.scale = 1;
+        App.mapState.offsetX = 0;
+        App.drawCanvas();
+    },
+    drawCanvas: () => {
+        if(!App.data) return;
+        const cvs = document.getElementById('seqCanvas'); 
+        const ctx = cvs.getContext('2d');
+        const seq = App.data.seq; 
+        const f = App.data.features;
+        const container = document.getElementById('seqContainer');
+        cvs.width = container.clientWidth;
+        cvs.height = 300; 
+        ctx.clearRect(0,0, cvs.width, cvs.height);
+        const charW = 10 * App.mapState.scale;
+        const charH = 18 * App.mapState.scale;
+        const fontSize = 14 * App.mapState.scale;
+        ctx.font = `${fontSize}px monospace`; 
+        ctx.textBaseline = "top";
+        const cols = Math.ceil(cvs.width / charW);
+        const getColor = (pos) => {
+            for(let h of f.homopolymers) if(pos>=h.start && pos<=h.end) return CONSTANTS.COLORS.homopolymer;
+            for(let h of f.dinuc) if(pos>=h.start && pos<=h.end) return CONSTANTS.COLORS.dinuc;
+            for(let h of f.trinuc) if(pos>=h.start && pos<=h.end) return CONSTANTS.COLORS.trinuc;
+            for(let h of f.tetranuc) if(pos>=h.start && pos<=h.end) return CONSTANTS.COLORS.tetranuc;
+            for(let h of f.palindromes) if(pos>=h.start && pos<=h.end) return CONSTANTS.COLORS.palindrome;
+            for(let h of f.lcr) if(pos>=h.start && pos<=h.end) return CONSTANTS.COLORS.lcr;
+            if('GC'.includes(seq[pos])) return CONSTANTS.COLORS.gc;
+            return null;
+        };
+        const startIdx = Math.floor((-App.mapState.offsetX) / charW);
+        const visibleChars = Math.ceil((cvs.width / charW)) + 1;
+        let y = 20;
+        let x = 10 + App.mapState.offsetX;
+        for(let i=0; i<seq.length; i++) {
+            const char = seq[i];
+            const col = getColor(i);
+            if(x + charW > 0 && x < cvs.width) {
+                if(col) { 
+                    ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`; 
+                    ctx.fillRect(x, y, charW, charH); 
+                }
+                ctx.fillStyle = 'black'; 
+                ctx.fillText(char, x, y);
+            }
+            x += charW;
+            if(x > cvs.width - charW) {
+                x = 10 + App.mapState.offsetX;
+                y += charH;
+                if(y > cvs.height) break; 
+            }
+        }
+    },
+    drawCharts: () => {
+        const d = App.data; const c = d.counts; const total = d.len;
+        App.drawPie('pieBase', [c.A, c.T, c.G, c.C], ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f'], ['A','T','G','C']);
+        const fVals = [d.features.homopolymers.length, d.features.dinuc.length, d.features.trinuc.length, d.features.tetranuc.length, d.features.palindromes.length, d.features.lcr.length];
+        const fCols = [CONSTANTS.COLORS.homopolymer, CONSTANTS.COLORS.dinuc, CONSTANTS.COLORS.trinuc, CONSTANTS.COLORS.tetranuc, CONSTANTS.COLORS.palindrome, CONSTANTS.COLORS.lcr].map(c=>`rgb(${c[0]},${c[1]},${c[2]})`);
+        App.drawPie('pieFeat', fVals, fCols, ['Homo','Di','Tri','Tetra','Pal','LCR']);
+        document.getElementById('gcBar').style.width = d.gcPct + '%';
+        document.getElementById('gcLabel').innerText = d.gcPct.toFixed(1) + '%';
+        App.drawBar('barCounts', [c.A, c.T, c.G, c.C], ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f']);
+    },
+    drawPie: (id, data, colors, labels) => {
+        const cvs = document.getElementById(id); const ctx = cvs.getContext('2d');
+        const total = data.reduce((a,b)=>a+b, 0); let start = 0;
+        const cx = 100, cy = 100, r = 80;
+        ctx.clearRect(0,0,200,200);
+        data.forEach((v, i) => {
+            if(v===0) return;
+            const slice = (v/total) * 2 * Math.PI;
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, start+slice); ctx.fillStyle = colors[i]; ctx.fill(); start += slice;
+        });
+        const leg = document.getElementById(id+'Legend');
+        leg.innerHTML = labels.map((l,i) => `<span style="color:${colors[i]||'#ccc'}">■ ${l}</span>`).join('');
+    },
+    drawBar: (id, data, colors) => {
+        const cvs = document.getElementById(id); const ctx = cvs.getContext('2d');
+        const max = Math.max(...data, 10); 
+        const w = 30, gap = 20;
+        const h = 150;
+        ctx.clearRect(0,0,200,200);
+        data.forEach((v, i) => {
+            const barH = (v/max) * h;
+            ctx.fillStyle = colors[i];
+            ctx.fillRect(20 + i*(w+gap), 180 - barH, w, barH);
+            ctx.fillStyle = '#333';
+            ctx.fillText(['A','T','G','C'][i], 20 + i*(w+gap) + 8, 195);
+            ctx.fillText(v, 20 + i*(w+gap) + 5, 175 - barH);
+        });
+    },
+    drawLegend: () => {
+        const items = [
+            ['Homopolymer (≥5)', CONSTANTS.COLORS.homopolymer],
+            ['Dinuc (≥4)', CONSTANTS.COLORS.dinuc],
+            ['Trinuc (≥3)', CONSTANTS.COLORS.trinuc],
+            ['Tetranuc (≥3)', CONSTANTS.COLORS.tetranuc],
+            ['Palindrome', CONSTANTS.COLORS.palindrome],
+            ['Low Complexity', CONSTANTS.COLORS.lcr],
+            ['GC Base', CONSTANTS.COLORS.gc]
+        ];
+        document.getElementById('mapLegend').innerHTML = items.map(([l,c]) => 
+            `<div class="legend-item"><div class="l-box" style="background:rgb(${c[0]},${c[1]},${c[2]})"></div>${l}</div>`
+        ).join('');
+    },
+    exportData: (type) => {
+        if(!App.data) return;
+        let csvContent = "data:text/csv;charset=utf-8,";
+        if(type === 'primers') {
+            csvContent += "Pair,Direction,Sequence,Start,End,Tm,GC%,Length,MW,Da,SelfDG\n";
+            App.data.primers.forEach((p, i) => {
+                csvContent += `${i+1},FWD,${p.f.seq},${p.f.start+1},${p.f.end+1},${p.f.tm.toFixed(2)},${p.f.gc.toFixed(1)},${p.f.len},${Thermo.calcMW(p.f.seq).toFixed(2)},${p.f.selfDG.toFixed(2)}\n`;
+                csvContent += `${i+1},REV,${p.r.seq},${p.r.start+1},${p.r.end+1},${p.r.tm.toFixed(2)},${p.r.gc.toFixed(1)},${p.r.len},${Thermo.calcMW(p.r.seq).toFixed(2)},${p.r.selfDG.toFixed(2)}\n`;
+            });
+        } else if (type === 'summary') {
+            csvContent += `Metric,Value\nLength,${App.data.len}\nGC%,${App.data.gcPct.toFixed(2)}\nA,${App.data.counts.A}\nT,${App.data.counts.T}\nG,${App.data.counts.G}\nC,${App.data.counts.C}\n`;
+            csvContent += `\nFeature,Count\nHomopolymers,${App.data.features.homopolymers.length}\nDinuc,${App.data.features.dinuc.length}\nTrinuc,${App.data.features.trinuc.length}\nPalindromes,${App.data.features.palindromes.length}\n`;
+        } else if (type === 'map') {
+            csvContent += "Start,End,Type\n";
+            App.data.features.homopolymers.forEach(f => csvContent += `${f.start},${f.end},Homopolymer\n`);
+            App.data.features.dinuc.forEach(f => csvContent += `${f.start},${f.end},Dinuc\n`);
+            App.data.features.palindromes.forEach(f => csvContent += `${f.start},${f.end},Palindrome\n`);
+        }
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Amplifex_${type}_${document.getElementById('jobName').value}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};
+
+const CONSTANTS = {
+    COLORS: {
+        homopolymer: [255,230,120], dinuc: [102,204,102], trinuc: [102,153,255],
+        tetranuc: [255,153,102], palindrome: [180,102,255], lcr: [220,220,220],
+        primer_f: [34,139,34], primer_r: [204,0,0], gc: [255,255,200]
+    }
+};
+
+function toggleSettings() {
+    const el = document.getElementById('advSettings');
+    const toggle = document.querySelector('.settings-toggle');
+    if(el.classList.contains('open')) {
+        el.classList.remove('open');
+        toggle.innerText = "[+] Show Advanced Design Parameters";
+    } else {
+        el.classList.add('open');
+        toggle.innerText = "[-] Hide Advanced Design Parameters";
+    }
+}
+
+function openContact() { document.getElementById('contactModal').style.display = 'flex'; }
+function closeContact() { document.getElementById('contactModal').style.display = 'none'; }
+
+function sendContact() {
+    const name = document.getElementById('cName').value;
+    const reason = document.getElementById('cReason').value;
+    const msg = document.getElementById('cMsg').value;
+    if(!name || !msg) return alert("Please fill in Name and Message.");
+    const subject = `Amplifex Inquiry: ${reason} - ${name}`;
+    const body = `Name: ${name}\n\nMessage:\n${msg}`;
+    window.location.href = `mailto:sohaibhassan06081999@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    alert("Opening your email client...");
+    closeContact();
+}
+
+function printReport() {
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'block');
+    document.getElementById('dlBtn').style.display = 'none';
+    document.querySelectorAll('.no-print').forEach(n => n.classList.add('hide-on-print'));
+    setTimeout(() => { window.print(); }, 500);
+}
+
+// FIX: Explicitly attach to window to ensure onclick handlers work
+window.App = App;
+window.toggleSettings = toggleSettings;
+window.openContact = openContact;
+window.closeContact = closeContact;
+window.sendContact = sendContact;
+window.printReport = printReport;
+
+App.init();
+
+</script>
+</body>
+</html>
